@@ -4,18 +4,40 @@ recompute_hashes = false
 versioning = true
 bottom = true
 minified = true
-next = gatekeeper 
+next = mapping 
+
 
 [filter:locale]
 use = egg:cromlech.i18n#locale
 
+
 [app:gatekeeper]
-use = egg:gatekeeper#app
+use = egg:gatekeeper#keeper
 name = gatekeeper
-zcml_file = ${zcml:output}
+
+
+[app:timeout]
+use = egg:gatekeeper#timeout
+
+
+[app:unauthorized]
+use = egg:gatekeeper#unauthorized
+
+
+[app:loginform]
+use = egg:gatekeeper#login
+pkey = /home/dolmen/apache/cert/portal.novareto.de_pubkey.pem 
+
+
+[app:mapping]
+use = egg:Paste#urlmap
+/ = gatekeeper
+/login = loginform
+/timeout = timeout
+/unauthorized = unauthorized
+
 
 [server:main]
 use = egg:Paste#http
 host = 0.0.0.0
 port = 8080
-

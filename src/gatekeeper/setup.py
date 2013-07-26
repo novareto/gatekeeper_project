@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.0'
+version = '0.1'
 
 setup(name='gatekeeper',
       version=version,
@@ -18,14 +18,21 @@ setup(name='gatekeeper',
       include_package_data=True,
       zip_safe=False,
       install_requires=[
-          # -*- Extra requirements: -*-
+          "cromlech.webob",
+          "cromlech.browser",
+          "cromlech.dawnlight",
+          "dolmen.template",
+          "dolmen.view",
       ],
       entry_points={
          'fanstatic.libraries': [
             'gatekeeper = gatekeeper.resources:library',
          ],
          'paste.app_factory': [
-             'app = gatekeeper.utils:app',
+             'keeper = gatekeeper.utils:keeper',
+             'timeout = gatekeeper.login:timeout',
+             'login = gatekeeper.login:Login',
+             'unauthorized = gatekeeper.login:unauthorized',
          ],
          'paste.filter_factory': [
              'global_config = gatekeeper.utils:configuration',

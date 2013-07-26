@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
 from cromlech.configuration.utils import load_zcml
 from cromlech.i18n import register_allowed_languages
 from cromlech.dawnlight import DawnlightPublisher
@@ -53,7 +52,7 @@ class Site(Location):
         return getGlobalSiteManager()
 
 
-def app(global_conf, name, zcml_file=None, **kwargs):
+def keeper(global_conf, name, zcml_file=None, **kwargs):
     """A factory used to bootstrap the TrajectApplication.
     As the TrajectApplication will use SQL, we use this
     'once and for all' kind of factory to configure the
