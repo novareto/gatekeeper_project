@@ -1,18 +1,26 @@
 # -*- coding: utf-8 -*-
 
-from webob.exc import HTTPFound
-from webob.dec import wsgify
 import datetime, time, base64
 import auth_pubtkt
 import os
-from urllib import quote
+
 from M2Crypto import RSA, EVP
 from cStringIO import StringIO
-from paste.urlmap import URLMap
-from dolmen.view import View as BaseView
 from cromlech.webob import Response, Request
-from uvclight import get_template
-
+from grokcore.component import baseclass
+from paste.urlmap import URLMap
+from urllib import quote
+from uvclight import Form, Actions, Action, Fields, Marker, ISuccessMarker
+from uvclight import implementer, context, get_template, View as BaseView
+from uvclight import FAILURE
+from webob.dec import wsgify
+from webob.exc import HTTPFound
+from zope.interface import Interface
+from zope.component import getMultiAdapter
+from cromlech.browser import IPublicationRoot
+from cromlech.browser.exceptions import HTTPRedirect
+from zope.location import Location
+from zope.schema import TextLine, Password
 
 iv = os.urandom(16)
 
@@ -22,39 +30,44 @@ timeout_template = get_template('timeout.pt', __file__)
 unauthorized_template = get_template('unauthorized.pt', __file__)
 
 
+class ILoginForm(Interface):
+    """A simple login form interface.
+    """
+    login = TextLine(
+        title=u"Username",
+        required=True,
+        )
+    
+    password = Password(
+        title=u"Password",
+        required=True,
+        )
+
+
+class IResponseSuccessMarker(ISuccessMarker):
+    pass
+
+
+@implementer(IResponseSuccessMarker)
+class ResponseSuccessMarker(Marker):
+
+    def __init__(self, success, response):
+        self.success = success
+        self.response = response
+        self.url = None
+        
+    def __nonzero__(self):
+        return bool(self.success)
+
+
 class View(BaseView):
     responseFactory = Response
+    baseclass()
 
     def __init__(self, environ, request, template):
         self.context = environ
         self.request = request
         self.template = template
-
-
-class LoginForm(BaseView):
-    responseFactory = Response
-    template = login_template
-
-    def __init__(self, context, request, **values):
-        self.context = context
-        self.request = request
-        self.values = values
-
-    def namespace(self):
-        ns = dict(
-            view=self,
-            title=u'Something',
-            user_field='username',
-            pass_field='password',
-            button='form-button')
-        ns.update(self.values)
-        return ns
-
-
-def base_authentication(login, passwd):
-    if login == "admin" and passwd == "admin":
-        return login
-    return None
 
 
 def bauth(val):
@@ -71,17 +84,16 @@ def bauth(val):
         return data
     return encrypt(val, 'mKaqGWwAVNnthL6J')
 
+    
+class LogMe(Action):
 
-class Login(object):
+    def available(self, form):
+        return True
 
-    def __init__(self, global_conf, pkey, **kwargs):
-        self.authenticate = base_authentication
-        self.pkey = pkey
-
-    def logged_in_response(self, login, password, back):
-        privkey = RSA.load_pub_key(self.pkey)
-
+    def cook(self, form, login, password, back='/'):
+        privkey = RSA.load_key(form.context.pkey)
         val = base64.encodestring(bauth('%s:%s' % (login, password)))
+        #val = base64.encodestring('%s:%s' % (login, password))
         validtime = datetime.datetime.now() + datetime.timedelta(hours=1)
         validuntil = int(time.mktime(validtime.timetuple()))
         ticket = auth_pubtkt.create_ticket(
@@ -92,47 +104,72 @@ class Login(object):
         res.set_cookie('auth_pubtkt', quote(ticket), path='/',
                        domain='novareto.de', secure=False)
         return res
+        
+    def __call__(self, form):
+        data, errors = form.extractData()
+        if errors:
+            form.submissionError = errors
+            return FAILURE
+
+        login = data.get('login')
+        password = data.get('password')
+        back = data.get('back', '/')
+        
+        if form.authenticate(login, password):
+            res = self.cook(form, login, password, back)
+            return ResponseSuccessMarker(True, res)
+
+        return FAILURE
+
+
+@implementer(IPublicationRoot)
+class Login(Location):
+
+    def __init__(self, global_conf, pkey, **kwargs):
+        self.authenticate = base_authentication
+        self.pkey = pkey
 
     def __call__(self, environ, start_response):
-        user = None
-        message = "Please login"
         request = Request(environ)
-
-        if user is not None:
-            # User is already logged in
-            back = request.GET.get('back', '/')
-            return request.get_response(HTTPFound(location=back))
-
-        username = request.POST.get('username', '')
-        if 'POST' == request.environ['REQUEST_METHOD']:
-            ###
-            # User is currently posting the login form
-            ###
-            back = request.POST.get('back', '/')
-            password = request.POST.get('password', '')
-
-            user = self.authenticate(username, password)
-
-            if user is not None:
-                return self.logged_in_response(username, password, back)(
-                    environ, start_response)
-            else:
-                message = self.failed_message
-        else:
-            ###
-            # User is not logged in and is not submitting the form.
-            ###
-            back = request.GET.get('back', '/')
-
-        # default : we render the form
-        values = {"username": username,
-                  "back": back,
-                  "message": message}
-        form = LoginForm(self, request, **values)
-        name = request.path.split('/')[-1]
-        form.__name__ = form.__component_name__ = name
-        form.__parent__ = self
+        form = getMultiAdapter((self, request), Interface, u'loginform')
         return form()(environ, start_response)
+        
+
+class LoginForm(Form):
+    context(Login)
+    responseFactory = Response
+
+    fields = Fields(ILoginForm)
+    actions = Actions(LogMe(u'Authenticated'))
+    
+    def authenticate(self, login, password):
+        if login == "admin" and password == "admin":
+            return login
+        return None
+
+    def updateForm(self):
+        if self._updated is False:
+            action, result = self.updateActions()
+            if IResponseSuccessMarker.providedBy(result):
+                return result.response
+            self.updateWidgets()
+            self._updated = True
+        return None
+            
+    def __call__(self, *args, **kwargs):
+        try:
+            self.update(*args, **kwargs)
+            response = self.updateForm()
+            if response is not None:
+                return response
+            else:
+                result = self.render(*args, **kwargs)
+                return self.make_response(result, *args, **kwargs)
+        except HTTPRedirect, exc:
+            return redirect_exception_response(self.responseFactory, exc)
+
+
+base_authentication = {}
 
 
 def timeout(global_conf, **kwargs):

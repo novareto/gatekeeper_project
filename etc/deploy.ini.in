@@ -14,6 +14,7 @@ use = egg:cromlech.i18n#locale
 [app:gatekeeper]
 use = egg:gatekeeper#keeper
 name = gatekeeper
+zcml_file = ${zcml:output}
 
 
 [app:timeout]
@@ -26,7 +27,7 @@ use = egg:gatekeeper#unauthorized
 
 [app:loginform]
 use = egg:gatekeeper#login
-pkey = /home/dolmen/apache/cert/portal.novareto.de_pubkey.pem 
+pkey = /home/dolmen/apache/cert/portal.novareto.de_privkey.pem 
 
 
 [app:mapping]
@@ -40,4 +41,4 @@ use = egg:Paste#urlmap
 [server:main]
 use = egg:Paste#http
 host = 0.0.0.0
-port = 8080
+port = 8082

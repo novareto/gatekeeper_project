@@ -23,6 +23,9 @@ setup(name='gatekeeper',
           "cromlech.dawnlight",
           "dolmen.template",
           "dolmen.view",
+          "auth_pubtkt",
+          "uvclight",
+          "M2Crypto",
       ],
       entry_points={
          'fanstatic.libraries': [
