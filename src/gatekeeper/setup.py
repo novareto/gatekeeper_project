@@ -32,7 +32,7 @@ setup(name='gatekeeper',
             'gatekeeper = gatekeeper.resources:library',
          ],
          'paste.app_factory': [
-             'keeper = gatekeeper.utils:keeper',
+             'keeper = gatekeeper.app:keeper',
              'timeout = gatekeeper.login:timeout',
              'login = gatekeeper.login:Login',
              'unauthorized = gatekeeper.login:unauthorized',

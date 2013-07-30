@@ -15,6 +15,9 @@ use = egg:cromlech.i18n#locale
 use = egg:gatekeeper#keeper
 name = gatekeeper
 zcml_file = ${zcml:output}
+portals = https://change.me
+          http://some.thing
+	  http://some.other.thing
 
 
 [app:timeout]

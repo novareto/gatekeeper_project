@@ -6,26 +6,21 @@ import os
 
 from M2Crypto import RSA, EVP
 from cStringIO import StringIO
+from cromlech.browser import IPublicationRoot, redirect_exception_response
+from cromlech.browser.exceptions import HTTPRedirect
 from cromlech.webob import Response, Request
 from grokcore.component import baseclass
-from paste.urlmap import URLMap
 from urllib import quote
+from uvclight import FAILURE
 from uvclight import Form, Actions, Action, Fields, Marker, ISuccessMarker
 from uvclight import implementer, context, get_template, View as BaseView
-from uvclight import FAILURE
-from webob.dec import wsgify
 from webob.exc import HTTPFound
-from zope.interface import Interface
 from zope.component import getMultiAdapter
-from cromlech.browser import IPublicationRoot
-from cromlech.browser.exceptions import HTTPRedirect
+from zope.interface import Interface
 from zope.location import Location
 from zope.schema import TextLine, Password
 
-iv = os.urandom(16)
 
-
-login_template = get_template('login.pt', __file__)
 timeout_template = get_template('timeout.pt', __file__)
 unauthorized_template = get_template('unauthorized.pt', __file__)
 
@@ -70,6 +65,9 @@ class View(BaseView):
         self.template = template
 
 
+iv = os.urandom(16)
+
+
 def bauth(val):
     def encrypt(data, key):
         # Zero padding
@@ -84,7 +82,7 @@ def bauth(val):
         return data
     return encrypt(val, 'mKaqGWwAVNnthL6J')
 
-    
+
 class LogMe(Action):
 
     def available(self, form):
@@ -93,7 +91,6 @@ class LogMe(Action):
     def cook(self, form, login, password, back='/'):
         privkey = RSA.load_key(form.context.pkey)
         val = base64.encodestring(bauth('%s:%s' % (login, password)))
-        #val = base64.encodestring('%s:%s' % (login, password))
         validtime = datetime.datetime.now() + datetime.timedelta(hours=1)
         validuntil = int(time.mktime(validtime.timetuple()))
         ticket = auth_pubtkt.create_ticket(
@@ -126,14 +123,13 @@ class LogMe(Action):
 class Login(Location):
 
     def __init__(self, global_conf, pkey, **kwargs):
-        self.authenticate = base_authentication
         self.pkey = pkey
 
     def __call__(self, environ, start_response):
         request = Request(environ)
         form = getMultiAdapter((self, request), Interface, u'loginform')
         return form()(environ, start_response)
-        
+
 
 class LoginForm(Form):
     context(Login)
@@ -141,7 +137,7 @@ class LoginForm(Form):
 
     fields = Fields(ILoginForm)
     actions = Actions(LogMe(u'Authenticated'))
-    
+
     def authenticate(self, login, password):
         if login == "admin" and password == "admin":
             return login
@@ -155,7 +151,7 @@ class LoginForm(Form):
             self.updateWidgets()
             self._updated = True
         return None
-            
+
     def __call__(self, *args, **kwargs):
         try:
             self.update(*args, **kwargs)
@@ -167,9 +163,6 @@ class LoginForm(Form):
                 return self.make_response(result, *args, **kwargs)
         except HTTPRedirect, exc:
             return redirect_exception_response(self.responseFactory, exc)
-
-
-base_authentication = {}
 
 
 def timeout(global_conf, **kwargs):
