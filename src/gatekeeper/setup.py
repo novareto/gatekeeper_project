@@ -32,9 +32,6 @@ setup(name='gatekeeper',
           "wsgistate",
       ],
       entry_points={
-         'fanstatic.libraries': [
-            'gatekeeper = gatekeeper.resources:library',
-         ],
          'paste.app_factory': [
              'keeper = gatekeeper.app:keeper',
              'timeout = gatekeeper.login:timeout',
