@@ -4,13 +4,20 @@ from dolmen.layout import Layout
 from grokcore.component import context
 from zope.interface import Interface
 from cromlech.webob import response
+from js.bootstrap import bootstrap
+from uvclight import get_template
+from dolmen.message import receive
 
 
-class RawLayout(Layout):
+class GateLayout(Layout):
     context(Interface)
 
     responseFactory = response.Response
-    title = u"Returns it all"
+    template = get_template('layout.pt', __file__)
 
+    title = u"Gatekeeper"
+     
     def __call__(self, content, **namespace):
-        return content
+        bootstrap.need()
+        namespace['gatekeeper_messages'] = list(receive())
+        return Layout.__call__(self, content, **namespace)

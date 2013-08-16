@@ -1,5 +1,6 @@
 <div i18n:domain="npai.authentication">
   <h2 tal:content="message" />
+
   <form id="login-form" method="POST" action="">
     <fieldset>
       <input type="hidden" name="back" id="back" value=""

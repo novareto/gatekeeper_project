@@ -1,0 +1,21 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/x
+html1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <title tal:content="layout.title" />
+    <base tal:attributes="href request.script_name + '/'" />
+  </head>
+  <body>
+    <div class="alert" tal:condition="gatekeeper_messages">
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+      <div tal:repeat="message gatekeeper_messages">
+        <span tal:content="message.message" />
+      </div>
+    </div>
+    <div class="container">
+      <div class="content">
+	<div tal:replace="structure content" />
+      </div>
+    </div>
+  </body>
+</html>

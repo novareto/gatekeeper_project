@@ -3,6 +3,7 @@
     xmlns:grok="http://namespaces.zope.org/grok">
 
   <include package="uvclight" />
+  <include package="dolmen.message" />
   <grok:grok package="." />
 
 </configure>
