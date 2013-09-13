@@ -17,6 +17,9 @@ class IPortal(Interface):
     def get_roles(user):
         pass
 
+    def get_dashboard(user):
+        pass
+
 
 @implementer(IPortal)
 class XMLRPCPortal(object):
@@ -30,13 +33,13 @@ class XMLRPCPortal(object):
         self.server = xmlrpclib.Server(url)
  
     def check_authentication(self, user, password):
-        #user = xmlrpclib.Binary(user)
-        #password = xmlrpclib.Binary(password)
         return self.server.checkAuth(user, password) is 1
 
     def get_roles(self, user):
-        user = xmlrpclib.Binary(user)
-        return self.server.getRolesFor(user, password)
+        return self.server.getRolesFor(user)
+
+    def get_dashboard(self, user):
+        return self.server.getRemoteDashboard(user) % {'url': self.backurl}
 
 
 UVCSITE = XMLRPCPortal("http://192.168.2.109:8080/app", u"Uvcsite", "http://uvcsite.novareto.de:8000")

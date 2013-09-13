@@ -11,38 +11,30 @@ from urllib import unquote
 from cromlech.browser import setSession, IPublicationRoot
 from cromlech.configuration.utils import load_zcml
 from cromlech.i18n import register_allowed_languages
+from cromlech.sqlalchemy import SQLAlchemySession, create_engine
 from cromlech.webob.request import Request
 from uvclight import get_template
-from zope.component import getUtilitiesFor, getUtility
+from zope.component import getUtility
 from zope.location import Location
 
 from . import SESSION_KEY
 from .login import read_bauth
 from .portals import IPortal
-
-keeper_template = get_template('door.pt', __file__)
+from .admin import Admin, get_valid_messages
 
 
 @uvclight.implementer(IPublicationRoot)
 class GateKeeper(Location):
 
-    def __init__(self, pubkey):
+    def __init__(self, pubkey, engine):
         self.pubkey = pubkey
+        self.engine = engine
 
-    @property
-    def portals(self):
-        return getUtilitiesFor(IPortal)
-
-
-class Index(uvclight.View):
-    uvclight.context(GateKeeper)
-    template = keeper_template
-
-    def get_authentication(self):
-        ticket = self.request.cookies.get('auth_pubtkt')
+    def get_tokens(self, request):
+        ticket = request.cookies.get('auth_pubtkt')
         if ticket:
             ticket = unquote(ticket)
-            pubkey = RSA.load_pub_key(self.context.pubkey)
+            pubkey = RSA.load_pub_key(self.pubkey)
             fields = auth_pubtkt.parse_ticket(ticket, pubkey)
 
             # we get the basic auth elements
@@ -54,19 +46,28 @@ class Index(uvclight.View):
             return user, password, portals
         else:
             raise ValueError('No ticket')
-        
 
-    def update(self):
-        self.user, self.password, self.portals = self.get_authentication()
+    def get_portals(self, request):
+        user, password, tokens = self.get_tokens(request)
+        for name in tokens:
+            gateway = getUtility(IPortal, name=name)
+            yield {
+                "title": gateway.title,
+                "url": gateway.backurl,
+                "dashboard": gateway.get_dashboard(user),
+                }
+
+    def get_messages(self):
+        with SQLAlchemySession(self.engine) as session:
+            messages = [m.message for m in get_valid_messages(session)]
+        return messages
             
 
-    def services(self):
-        for name in self.portals:
-            gateway = getUtility(IPortal, name=name)
-            yield gateway
+def keeper(global_conf, pubkey, dburl, zcml_file=None, langs="en,de,fr", **kwargs):
 
+    engine = create_engine(dburl, "admin")
+    engine.bind(Admin)
 
-def keeper(global_conf, pubkey, zcml_file=None, langs="en,de,fr", **kwargs):
     """A factory used to bootstrap the TrajectApplication.
     As the TrajectApplication will use SQL, we use this
     'once and for all' kind of factory to configure the
@@ -77,7 +78,7 @@ def keeper(global_conf, pubkey, zcml_file=None, langs="en,de,fr", **kwargs):
 
     allowed = langs.strip().replace(',', ' ').split()
     register_allowed_languages(allowed)
-    site = GateKeeper(pubkey)
+    site = GateKeeper(pubkey, engine)
 
     def publisher(environ, start_response):
         session = environ[SESSION_KEY].session

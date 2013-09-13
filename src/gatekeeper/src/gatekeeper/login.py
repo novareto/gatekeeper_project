@@ -8,7 +8,7 @@ from M2Crypto import RSA, EVP
 from cStringIO import StringIO
 
 from cromlech.browser import setSession, getSession
-from cromlech.browser import IPublicationRoot, redirect_exception_response
+from cromlech.browser import IView, IPublicationRoot, redirect_exception_response
 from cromlech.browser.exceptions import HTTPRedirect, HTTPFound
 from cromlech.webob import Response, Request
 from grokcore.component import baseclass

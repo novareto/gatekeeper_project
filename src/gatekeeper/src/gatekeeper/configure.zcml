@@ -4,6 +4,9 @@
 
   <include package="uvclight" />
   <include package="dolmen.message" />
+  <include package="cromlech.dawnlight" />
+  <include package="cromlech.dawnlight" file="consumers.zcml" />
+  <include package="dolmen.forms.crud" />
   <grok:grok package="." />
 
 </configure>
