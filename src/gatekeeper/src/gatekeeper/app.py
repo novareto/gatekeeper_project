@@ -8,6 +8,7 @@ import xmlrpclib
 from M2Crypto import RSA
 from urllib import unquote
 
+from cromlech.browser import exceptions
 from cromlech.browser import setSession, IPublicationRoot
 from cromlech.configuration.utils import load_zcml
 from cromlech.i18n import register_allowed_languages
@@ -21,6 +22,10 @@ from . import SESSION_KEY
 from .login import read_bauth
 from .portals import IPortal
 from .admin import Admin, get_valid_messages
+
+
+class MissingTicket(exceptions.HTTPForbidden):
+    title = u'Security ticket is missing : access forbidden'
 
 
 @uvclight.implementer(IPublicationRoot)
@@ -45,7 +50,7 @@ class GateKeeper(Location):
             portals = fields['tokens']
             return user, password, portals
         else:
-            raise ValueError('No ticket')
+            raise MissingTicket(location=None)
 
     def get_portals(self, request):
         user, password, tokens = self.get_tokens(request)
@@ -84,11 +89,17 @@ def keeper(global_conf, pubkey, dburl, zcml_file=None, langs="en,de,fr", **kwarg
         session = environ[SESSION_KEY].session
         setSession(session)
         request = Request(environ)
-        view = uvclight.query_view(request, site, name=u'index')
-        if view is None:
-            # do something !!
-            raise RuntimeError('No view !')
-        response = view()
+        try:
+            view = uvclight.query_view(request, site, name=u'index')
+            if view is None:
+                view = uvclight.query_view(request, site, name=u'notfound')
+            response = view()
+        except exceptions.HTTPException, e:
+            view = uvclight.query_view(request, site, name=u'unauthorized')
+            view.set_message(e.title)
+            response = view()
+            reponse = view()
+
         return response(environ, start_response)
     return publisher
 
