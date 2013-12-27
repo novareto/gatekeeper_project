@@ -17,7 +17,7 @@ cache = ${buildout:directory}/sessions
 use = egg:gatekeeper#keeper
 name = gatekeeper
 dburl = sqlite:///${buildout:directory}/admin.db
-pubkey = /home/dolmen/apache/cert/portal.novareto.de_pubkey.pem 
+pubkey = ${buildout:directory}/identity/server.pub
 zcml_file = ${zcml:output}
 
 
@@ -31,12 +31,12 @@ use = egg:gatekeeper#unauthorized
 
 [app:loginform]
 use = egg:gatekeeper#login
-pkey = /home/dolmen/apache/cert/portal.novareto.de_privkey.pem 
+pkey = ${buildout:directory}/identity/server.key
 
 
 [app:admin]
 use = egg:gatekeeper#admin
-pkey = /home/dolmen/apache/cert/portal.novareto.de_privkey.pem
+pkey = ${buildout:directory}/identity/server.key
 dburl = sqlite:///${buildout:directory}/admin.db
 dbkey = gatekeeper.admin
 

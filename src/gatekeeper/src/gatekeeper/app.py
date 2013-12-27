@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import datetime, time, base64
 import auth_pubtkt
 import uvclight
-import xmlrpclib
 
 from M2Crypto import RSA
 from urllib import unquote
@@ -14,7 +12,6 @@ from cromlech.configuration.utils import load_zcml
 from cromlech.i18n import register_allowed_languages
 from cromlech.sqlalchemy import SQLAlchemySession, create_engine
 from cromlech.webob.request import Request
-from uvclight import get_template
 from zope.component import getUtility
 from zope.location import Location
 
@@ -66,9 +63,10 @@ class GateKeeper(Location):
         with SQLAlchemySession(self.engine) as session:
             messages = [m.message for m in get_valid_messages(session)]
         return messages
-            
 
-def keeper(global_conf, pubkey, dburl, zcml_file=None, langs="en,de,fr", **kwargs):
+
+def keeper(global_conf, pubkey, dburl,
+           zcml_file=None, langs="en,de,fr", **kwargs):
 
     engine = create_engine(dburl, "admin")
     engine.bind(Admin)
@@ -98,11 +96,6 @@ def keeper(global_conf, pubkey, dburl, zcml_file=None, langs="en,de,fr", **kwarg
             view = uvclight.query_view(request, site, name=u'unauthorized')
             view.set_message(e.title)
             response = view()
-            reponse = view()
 
         return response(environ, start_response)
     return publisher
-
-
-
-

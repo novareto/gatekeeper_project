@@ -3,41 +3,24 @@
 import transaction
 from . import SESSION_KEY
 from cromlech.security import Interaction
-from cromlech.browser.interfaces import IView
 from cromlech.browser import IPublicationRoot
-from cromlech.browser import setSession, getSession
+from cromlech.browser import setSession
 from cromlech.dawnlight import ViewLookup
 from cromlech.dawnlight import traversable, DawnlightPublisher
 from cromlech.sqlalchemy import create_and_register_engine
 from cromlech.sqlalchemy import SQLAlchemySession
-from cromlech.sqlalchemy import get_session
-from cromlech.webob import Response, Request
-from datetime import datetime
-from dolmen.content import Model, schema
-from dolmen.content import get_schema, IContent, IFactory
-from dolmen.forms.base import Action, Actions, Fields, SuccessMarker
-from dolmen.forms.crud import Display, Edit, Add, Delete
-from dolmen.forms.ztk import InvariantsValidation
-from dolmen.location import get_absolute_url
-from dolmen.menu import menuentry
+from cromlech.webob import Request
+from datetime.datetime import now
+from dolmen.content import schema
 from dolmen.sqlcontainer import SQLContainer
-from dolmen.view import query_view, make_layout_response
-from grokcore.component import title, context, name, adapts, MultiAdapter
+from dolmen.view import query_view
 from grokcore.security import require
-from sqlalchemy import Column, Text, Integer, Boolean, DateTime, String
+from sqlalchemy import Column, Text, Integer, DateTime, String
 from sqlalchemy.ext.declarative import declarative_base
-from zope.cachedescriptors.property import CachedProperty
-from zope.component import queryMultiAdapter
-from zope.component.hooks import getSite
-from zope.interface import implements, Interface, implementer
-from zope.location import locate, Location
+from zope.interface import Interface, implementer
+from zope.location import Location
 import zope.schema
 from zope.schema.vocabulary import SimpleVocabulary, SimpleTerm
-from zope.interface import Invalid, invariant
-
-
-def query_view(request, obj, name=""):
-    return queryMultiAdapter((obj, request), IView, name=name)
 
 
 view_lookup = ViewLookup(query_view)
@@ -74,11 +57,11 @@ class IMessage(Interface):
         title=u"Unique identifier",
         readonly=True,
         required=True)
-    
+
     message = zope.schema.Text(
         title=u"Message",
         required=True)
-    
+
     type = zope.schema.Choice(
         title=u"Type of message",
         vocabulary=TYPES,
@@ -112,8 +95,8 @@ class Message(Location, Admin):
     message = Column('message', Text, nullable=False)
     type = Column('type', String(32), nullable=False)
     activation = Column('activation', String(32), nullable=False)
-    enable = Column('enable', DateTime, nullable=False, default=datetime.now())
-    disable = Column('disable', DateTime, nullable=False, default=datetime.now())
+    enable = Column('enable', DateTime, nullable=False, default=now())
+    disable = Column('disable', DateTime, nullable=False, default=now())
 
 
 class MessagesRoot(SQLContainer):
@@ -123,30 +106,30 @@ class MessagesRoot(SQLContainer):
 @implementer(IPublicationRoot)
 class AdminRoot(Location):
     traversable('messages')
-    
+
     def __init__(self, pkey, dbkey):
         self.pkey = pkey
         self.messages = MessagesRoot(self, 'messages', dbkey)
 
 
 def get_valid_messages(session):
-    now = datetime.now()
+    limit = now()
     enabled = session.query(Message).filter(Message.activation == ENABLED)
     valid = session.query(Message).filter(
         Message.activation == ON_DATES).filter(
-        Message.enable <= now).filter(Message.disable >= now)
+        Message.enable <= limit).filter(Message.disable >= limit)
     return iter(enabled.union(valid))
 
-        
+
 def admin(global_conf, dburl, dbkey, pkey, **kwargs):
 
     engine = create_and_register_engine(dburl, dbkey)
     engine.bind(Admin)
     Admin.metadata.create_all()
-    
+
     root = AdminRoot(pkey, dbkey)
     publisher = DawnlightPublisher(view_lookup=view_lookup)
-    
+
     def app(environ, start_response):
         session = environ[SESSION_KEY].session
         setSession(session)

@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import datetime, time, base64
+import datetime
+import time
+import base64
 import auth_pubtkt
-import os
 
 from M2Crypto import RSA, EVP
 from cStringIO import StringIO
 
-from cromlech.browser import setSession, getSession
-from cromlech.browser import IView, IPublicationRoot, redirect_exception_response
-from cromlech.browser.exceptions import HTTPRedirect, HTTPFound
-from cromlech.webob import Response, Request
+from cromlech.browser import setSession
+from cromlech.browser import IView, IPublicationRoot
+from cromlech.webob import Request
 from grokcore.component import baseclass
 from dolmen.message import send
 
@@ -18,7 +18,7 @@ from urllib import quote
 from uvclight import FAILURE
 from uvclight import Form, Actions, Action, Fields, Marker, ISuccessMarker
 from dolmen.forms.base.markers import SuccessMarker
-from uvclight import implementer, context, get_template, View as BaseView
+from uvclight import implementer, context, get_template
 from webob.exc import HTTPFound
 from zope.component import getMultiAdapter, getUtilitiesFor
 from zope.interface import Interface
@@ -40,7 +40,7 @@ class ILoginForm(Interface):
         title=u"Username",
         required=True,
         )
-    
+
     password = Password(
         title=u"Password",
         required=True,
@@ -58,7 +58,7 @@ class ResponseSuccessMarker(Marker):
         self.success = success
         self.response = response
         self.url = None
-        
+
     def __nonzero__(self):
         return bool(self.success)
 
@@ -73,7 +73,7 @@ def bauth(val):
     def encrypt(data, key):
         # Zero padding
         if len(data) % 16 != 0:
-            data += PAD * (16 - len(data) % 16);
+            data += PAD * (16 - len(data) % 16)
             buffer = StringIO()
             cipher = EVP.Cipher('aes_128_cbc', key=key, iv=iv, op=1)
             cipher.set_padding(0)
@@ -123,7 +123,7 @@ class LogMe(Action):
         res.set_cookie('auth_pubtkt', quote(ticket), path='/',
                        domain='novareto.de', secure=False)
         return res
-        
+
     def __call__(self, form):
         data, errors = form.extractData()
         if errors:
@@ -133,7 +133,7 @@ class LogMe(Action):
         login = data.get('login')
         password = data.get('password')
         back = data.get('back', '/')
-        
+
         authenticated_for = form.authenticate(login, password)
         if authenticated_for:
             sent = send(u'Login successful.')
@@ -171,21 +171,10 @@ class BaseLoginForm(Form):
             self._updated = True
         return None
 
-    def __call__(self, *args, **kwargs):
-        try:
-            self.update()
-            response = self.updateForm()
-            if response is not None:
-                return response
-            else:
-                result = self.render(*args, **kwargs)
-                return self.make_response(result, *args, **kwargs)
-        except HTTPRedirect, exc:
-            return redirect_exception_response(self.responseFactory, exc)
-        
 
 def login(global_conf, pkey, **kwargs):
     root = LoginRoot(pkey)
+
     def app(environ, start_response):
         session = environ[SESSION_KEY].session
         setSession(session)
