@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import transaction
 from . import SESSION_KEY
 from cromlech.security import Interaction
@@ -10,7 +11,6 @@ from cromlech.dawnlight import traversable, DawnlightPublisher
 from cromlech.sqlalchemy import create_and_register_engine
 from cromlech.sqlalchemy import SQLAlchemySession
 from cromlech.webob import Request
-from datetime.datetime import now
 from dolmen.content import schema
 from dolmen.sqlcontainer import SQLContainer
 from dolmen.view import query_view
@@ -49,6 +49,10 @@ TYPES = SimpleVocabulary((
     SimpleTerm(title=u"Information", value=INFO),
     SimpleTerm(title=u"Advertisement", value=ADVERT),
     ))
+
+
+def now():
+    return datetime.datetime.now()
 
 
 class IMessage(Interface):

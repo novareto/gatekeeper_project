@@ -76,8 +76,8 @@ class XMLRPCPortal(object):
         return self.server.getRemoteDashboard(user) % {'url': self.backurl}
 
 
-UVCSITE = XMLRPCPortal("http://192.168.2.109:8080/app",
-                       u"Uvcsite", "http://uvcsite.novareto.de:8000")
+UVCSITE = XMLRPCPortal("http://karl.novareto.de:7081/app",
+                       u"Uvcsite", "http://karl.novareto.de:7081/app")
 
 Plone = XMLRPCPortal("http://admin:admin@192.168.2.109:8099/Plone",
                      u"PLONE", "http://plone.novareto.de:8000")
