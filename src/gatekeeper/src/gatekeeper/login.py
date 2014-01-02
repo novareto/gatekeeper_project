@@ -101,8 +101,9 @@ def read_bauth(val):
 @implementer(IPublicationRoot)
 class LoginRoot(Location):
 
-    def __init__(self, pkey):
+    def __init__(self, pkey, dest):
         self.pkey = pkey
+        self.dest = dest
 
 
 class LogMe(Action):
@@ -132,13 +133,13 @@ class LogMe(Action):
 
         login = data.get('login')
         password = data.get('password')
-        back = data.get('back', '/')
-
+        
         authenticated_for = form.authenticate(login, password)
         if authenticated_for:
             sent = send(u'Login successful.')
             assert sent is True
-            res = self.cook(form, login, password, authenticated_for, back)
+            res = self.cook(
+                form, login, password, authenticated_for, form.context.dest)
             return ResponseSuccessMarker(True, res)
         else:
             sent = send(u'Login failed.')
@@ -171,10 +172,21 @@ class BaseLoginForm(Form):
             self._updated = True
         return None
 
+    def __call__(self, *args, **kwargs):
+        try:
+            self.update(*args, **kwargs)
+            response = self.updateForm()
+            if response is None:
+                result = self.render(*args, **kwargs)
+                response = self.make_response(result, *args, **kwargs)
+            return response
+        except HTTPRedirect, exc:
+            return redirect_exception_response(self.responseFactory, exc)
 
-def login(global_conf, pkey, **kwargs):
-    root = LoginRoot(pkey)
 
+def login(global_conf, pkey, dest, **kwargs):
+    root = LoginRoot(pkey, dest)
+    
     def app(environ, start_response):
         session = environ[SESSION_KEY].session
         setSession(session)
