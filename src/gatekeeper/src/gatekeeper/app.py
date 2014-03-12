@@ -2,6 +2,7 @@
 
 import auth_pubtkt
 import uvclight
+import ConfigParser
 
 from M2Crypto import RSA
 from urllib import unquote
@@ -12,12 +13,14 @@ from cromlech.configuration.utils import load_zcml
 from cromlech.i18n import register_allowed_languages
 from cromlech.sqlalchemy import SQLAlchemySession, create_engine
 from cromlech.webob.request import Request
+from grokcore.component import global_utility
 from zope.component import getUtility
+from zope.component import getGlobalSiteManager
 from zope.location import Location
 
 from . import SESSION_KEY
 from .login import read_bauth
-from .portals import IPortal
+from .portals import IPortal, XMLRPCPortal
 from .admin import Admin, get_valid_messages
 
 
@@ -66,7 +69,8 @@ class GateKeeper(Location):
 
 
 def keeper(global_conf, pubkey, dburl,
-           zcml_file=None, langs="en,de,fr", **kwargs):
+           zcml_file=None, portals=None,
+           langs="en,de,fr", **kwargs):
 
     engine = create_engine(dburl, "admin")
     engine.bind(Admin)
@@ -76,8 +80,17 @@ def keeper(global_conf, pubkey, dburl,
     'once and for all' kind of factory to configure the
     SQL connection and inject the demo datas.
     """
-    if zcml_file:
+    if zcml_file is not None:
         load_zcml(zcml_file)
+
+    if portals is not None:
+        pconfig = ConfigParser.ConfigParser()
+        pconfig.read(portals)
+        for name in pconfig.sections():
+            portal = dict(pconfig.items(name))
+            xmlutil = XMLRPCPortal(
+                portal['inner'], portal['title'], portal['outer'])
+            getGlobalSiteManager().registerUtility(xmlutil, IPortal, name=name)
 
     allowed = langs.strip().replace(',', ' ').split()
     register_allowed_languages(allowed)

@@ -4,11 +4,13 @@ import datetime
 import time
 import base64
 import auth_pubtkt
+import socket
 
 from M2Crypto import RSA, EVP
 from cStringIO import StringIO
 
-from cromlech.browser import setSession
+from cromlech.browser import setSession, redirect_exception_response
+from cromlech.browser.exceptions import HTTPRedirect
 from cromlech.browser import IView, IPublicationRoot
 from cromlech.webob import Request
 from grokcore.component import baseclass
@@ -159,8 +161,11 @@ class BaseLoginForm(Form):
         gates = getUtilitiesFor(IPortal)
         authenticated_for = set()
         for name, gate in gates:
-            if gate.check_authentication(login, password):
-                authenticated_for.add(name)
+            try:
+                if gate.check_authentication(login, password):
+                    authenticated_for.add(name)
+            except socket.error:
+                print "%r could not be resolved" % name
         return authenticated_for
 
     def updateForm(self):

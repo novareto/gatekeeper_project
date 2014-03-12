@@ -2,7 +2,6 @@
 
 import xmlrpclib
 import socket
-from grokcore.component import global_utility
 from zope.interface import Interface, Attribute, implementer
 
 
@@ -74,13 +73,3 @@ class XMLRPCPortal(object):
     @timeout(None)
     def get_dashboard(self, user):
         return self.server.getRemoteDashboard(user) % {'url': self.backurl}
-
-
-UVCSITE = XMLRPCPortal("http://karl.novareto.de:7081/app",
-                       u"Uvcsite", "http://karl.novareto.de:7081/app")
-
-Plone = XMLRPCPortal("http://admin:admin@192.168.2.109:8099/Plone",
-                     u"PLONE", "http://plone.novareto.de:8000")
-
-global_utility(UVCSITE, provides=IPortal, name=u'uvcsite', direct=True)
-global_utility(Plone, provides=IPortal, name=u'portal', direct=True)
