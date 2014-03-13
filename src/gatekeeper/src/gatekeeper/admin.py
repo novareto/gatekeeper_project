@@ -21,6 +21,7 @@ from zope.interface import Interface, implementer
 from zope.location import Location
 import zope.schema
 from zope.schema.vocabulary import SimpleVocabulary, SimpleTerm
+from cromlech.dawnlight import query_view
 
 
 view_lookup = ViewLookup(query_view)

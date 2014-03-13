@@ -26,7 +26,8 @@ from zope.component import getMultiAdapter, getUtilitiesFor
 from zope.interface import Interface
 from zope.location import Location
 from zope.schema import TextLine, Password
-
+from cromlech.sqlalchemy import create_engine, SQLAlchemySession
+from .admin import get_valid_messages, Admin
 from . import SESSION_KEY
 from .portals import IPortal
 
@@ -41,12 +42,12 @@ class ILoginForm(Interface):
     login = TextLine(
         title=u"Username",
         required=True,
-        )
+    )
 
     password = Password(
         title=u"Password",
         required=True,
-        )
+    )
 
 
 class IResponseSuccessMarker(ISuccessMarker):
@@ -103,9 +104,21 @@ def read_bauth(val):
 @implementer(IPublicationRoot)
 class LoginRoot(Location):
 
-    def __init__(self, pkey, dest):
+    def __init__(self, pkey, dest, dburl, dbkey):
         self.pkey = pkey
         self.dest = dest
+        self.dbkey = dbkey
+        self.engine = create_engine(dburl, dbkey)
+        self.engine.bind(Admin)
+
+    def get_base_messages(self):
+        messages = []
+        with SQLAlchemySession(self.engine) as session:
+            messages = get_valid_messages(session)
+        return messages
+
+    def get_messages(self):
+        return [m.message for m in self.get_base_messages()]
 
 
 class LogMe(Action):
@@ -135,7 +148,7 @@ class LogMe(Action):
 
         login = data.get('login')
         password = data.get('password')
-        
+
         authenticated_for = form.authenticate(login, password)
         if authenticated_for:
             sent = send(u'Login successful.')
@@ -156,6 +169,13 @@ class BaseLoginForm(Form):
 
     fields = Fields(ILoginForm)
     actions = Actions(LogMe(u'Authenticated'))
+
+    def available(self):
+        marker = True
+        for message in self.context.get_base_messages():
+            if message.type == "alert":
+                marker = False
+        return marker
 
     def authenticate(self, login, password):
         gates = getUtilitiesFor(IPortal)
@@ -189,9 +209,9 @@ class BaseLoginForm(Form):
             return redirect_exception_response(self.responseFactory, exc)
 
 
-def login(global_conf, pkey, dest, **kwargs):
-    root = LoginRoot(pkey, dest)
-    
+def login(global_conf, pkey, dest, dburl, dbkey, **kwargs):
+    root = LoginRoot(pkey, dest, dburl, dbkey)
+
     def app(environ, start_response):
         session = environ[SESSION_KEY].session
         setSession(session)
