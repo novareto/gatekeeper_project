@@ -7,15 +7,15 @@ import ConfigParser
 from M2Crypto import RSA
 from urllib import unquote
 
-from cromlech.browser import exceptions
-from cromlech.browser import setSession, IPublicationRoot
+from cromlech.browser import exceptions, setSession
 from cromlech.configuration.utils import load_zcml
 from cromlech.i18n import register_allowed_languages
-from cromlech.sqlalchemy import SQLAlchemySession, create_engine
 from cromlech.webob.request import Request
-from grokcore.component import global_utility
-from zope.component import getUtility
-from zope.component import getGlobalSiteManager
+
+from uvclight import IRootObject
+from uvclight.backends.sql import SQLAlchemySession, create_engine
+
+from zope.component import getUtility, getGlobalSiteManager
 from zope.location import Location
 
 from . import SESSION_KEY
@@ -28,7 +28,7 @@ class MissingTicket(exceptions.HTTPForbidden):
     title = u'Security ticket is missing : access forbidden'
 
 
-@uvclight.implementer(IPublicationRoot)
+@uvclight.implementer(IRootObject)
 class GateKeeper(Location):
 
     def __init__(self, pubkey, engine):

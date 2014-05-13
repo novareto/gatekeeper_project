@@ -8,25 +8,27 @@ import socket
 
 from M2Crypto import RSA, EVP
 from cStringIO import StringIO
+from webob.exc import HTTPFound
 
-from cromlech.browser import setSession, redirect_exception_response
+from cromlech.browser import redirect_exception_response
 from cromlech.browser.exceptions import HTTPRedirect
-from cromlech.browser import IView, IPublicationRoot
+from cromlech.browser import IView
 from cromlech.webob import Request
-from grokcore.component import baseclass
+from cromlech.sqlalchemy import create_engine, SQLAlchemySession
+
 from dolmen.message import send
 
 from urllib import quote
-from uvclight import FAILURE
-from uvclight import Form, Actions, Action, Fields, Marker, ISuccessMarker
-from dolmen.forms.base.markers import SuccessMarker
-from uvclight import implementer, context, get_template
-from webob.exc import HTTPFound
-from zope.component import getMultiAdapter, getUtilitiesFor
+from uvclight import IRootObject, setSession, query_view
+from uvclight import FAILURE, Marker, SuccessMarker, ISuccessMarker
+from uvclight import Form, Actions, Action, Fields
+from uvclight import baseclass, implementer, context, get_template
+
+from zope.component import getUtilitiesFor
 from zope.interface import Interface
 from zope.location import Location
 from zope.schema import TextLine, Password
-from cromlech.sqlalchemy import create_engine, SQLAlchemySession
+
 from .admin import get_valid_messages, Admin
 from . import SESSION_KEY
 from .portals import IPortal
@@ -101,7 +103,7 @@ def read_bauth(val):
     return decrypt(val, 'mKaqGWwAVNnthL6J')
 
 
-@implementer(IPublicationRoot)
+@implementer(IRootObject)
 class LoginRoot(Location):
 
     def __init__(self, pkey, dest, dburl, dbkey):
@@ -216,7 +218,7 @@ def login(global_conf, pkey, dest, dburl, dbkey, **kwargs):
         session = environ[SESSION_KEY].session
         setSession(session)
         request = Request(environ)
-        form = getMultiAdapter((root, request), Interface, u'loginform')
+        form = query_view(root, root, name=u'loginform')
         response = form()(environ, start_response)
         setSession()
         return response
@@ -226,7 +228,7 @@ def login(global_conf, pkey, dest, dburl, dbkey, **kwargs):
 def timeout(global_conf, **kwargs):
     def app(environ, start_response):
         request = Request(environ)
-        view = getMultiAdapter((environ, request), IView, name="timeout")
+        view = query_view(request, environ, name="timeout")
         response = view()
         return response(environ, start_response)
     return app
@@ -235,7 +237,7 @@ def timeout(global_conf, **kwargs):
 def unauthorized(global_conf, **kwargs):
     def app(environ, start_response):
         request = Request(environ)
-        view = getMultiAdapter((environ, request), IView, name="unauthorized")
+        view = query_view(request, environ, name="unauthorized")
         response = view()
         return response(environ, start_response)
     return app

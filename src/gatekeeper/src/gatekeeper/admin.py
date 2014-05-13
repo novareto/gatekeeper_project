@@ -3,25 +3,20 @@
 import datetime
 import transaction
 from . import SESSION_KEY
-from cromlech.security import Interaction
-from cromlech.browser import IPublicationRoot
-from cromlech.browser import setSession
-from cromlech.dawnlight import ViewLookup
-from cromlech.dawnlight import traversable, DawnlightPublisher
-from cromlech.sqlalchemy import create_and_register_engine
-from cromlech.sqlalchemy import SQLAlchemySession
+
+from uvclight import setSession, IRootObject, Interaction
+from uvclight import query_view, require, schema, require, traversable
+from cromlech.dawnlight import DawnlightPublisher, ViewLookup
 from cromlech.webob import Request
-from dolmen.content import schema
-from dolmen.sqlcontainer import SQLContainer
-from dolmen.view import query_view
-from grokcore.security import require
+
 from sqlalchemy import Column, Text, Integer, DateTime, String
 from sqlalchemy.ext.declarative import declarative_base
+from uvclight.backends.sql import SQLAlchemySession, create_and_register_engine
+
+import zope.schema
 from zope.interface import Interface, implementer
 from zope.location import Location
-import zope.schema
 from zope.schema.vocabulary import SimpleVocabulary, SimpleTerm
-from cromlech.dawnlight import query_view
 
 
 view_lookup = ViewLookup(query_view)
@@ -108,7 +103,7 @@ class MessagesRoot(SQLContainer):
     factory = model = Message
 
 
-@implementer(IPublicationRoot)
+@implementer(IRootObject)
 class AdminRoot(Location):
     traversable('messages')
 

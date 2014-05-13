@@ -19,6 +19,7 @@ name = gatekeeper
 dburl = sqlite:///${buildout:directory}/admin.db
 pubkey = ${buildout:directory}/identity/server.pub
 zcml_file = ${zcml:output}
+portals = ${buildout:directory}/portals.ini
 
 
 [app:timeout]
