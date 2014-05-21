@@ -2,12 +2,14 @@
 
 import datetime
 import transaction
-from . import SESSION_KEY
+
+from . import SESSION_KEY, i18n as _
 
 from uvclight import setSession, IRootObject, Interaction
-from uvclight import query_view, require, schema, require, traversable
+from uvclight import query_view, require, traversable
 from cromlech.dawnlight import DawnlightPublisher, ViewLookup
 from cromlech.webob import Request
+from dolmen.sqlcontainer import SQLContainer
 
 from sqlalchemy import Column, Text, Integer, DateTime, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -19,7 +21,10 @@ from zope.location import Location
 from zope.schema.vocabulary import SimpleVocabulary, SimpleTerm
 
 
-view_lookup = ViewLookup(query_view)
+def query(request, obj, name):
+    return query_view(request, obj, name=name)
+
+view_lookup = ViewLookup(query)
 
 Admin = declarative_base()
 
@@ -34,17 +39,24 @@ ENABLED = u"enabled"
 
 
 MODES = SimpleVocabulary((
-    SimpleTerm(title="Always", value=ENABLED),
-    SimpleTerm(title="Time span", value=ON_DATES),
-    SimpleTerm(title="Disabled", value=DISABLED),
+    SimpleTerm(title=_("Always", default="Always"), value=ENABLED),
+    SimpleTerm(title=_("Time span", default="Time span"), value=ON_DATES),
+    SimpleTerm(title=_("Disabled", default="Disabled"), value=DISABLED),
     ))
 
 
 TYPES = SimpleVocabulary((
-    SimpleTerm(title=u"Alert", value=ALERT),
-    SimpleTerm(title=u"Information", value=INFO),
-    SimpleTerm(title=u"Advertisement", value=ADVERT),
+    SimpleTerm(title=_("Alert", default="Alert"), value=ALERT),
+    SimpleTerm(title=_("Info", default="Information"), value=INFO),
+    SimpleTerm(title=_("Ad", default="Advertisment"), value=ADVERT),
     ))
+
+
+styles = {
+    ALERT: u"alert alert-error",
+    INFO: u"alert",
+    ADVERT: u"alert alert-info",
+    }
 
 
 def now():
@@ -54,39 +66,38 @@ def now():
 class IMessage(Interface):
 
     id = zope.schema.Int(
-        title=u"Unique identifier",
+        title=_("Unique identifier"),
         readonly=True,
         required=True)
 
     message = zope.schema.Text(
-        title=u"Message",
+        title=_("Message"),
         required=True)
 
     type = zope.schema.Choice(
-        title=u"Type of message",
+        title=_("Type of message"),
         vocabulary=TYPES,
         default=INFO,
         required=True)
 
     activation = zope.schema.Choice(
-        title=u"Type of message",
+        title=_("Method of activation"),
         vocabulary=MODES,
         default=ON_DATES,
         required=True)
 
     enable = zope.schema.Datetime(
-        title=u"Date of activation",
-        description=u"Set empty for an immediate activation",
+        title=_(u"Date of activation"),
+        description=_(u"Set empty for an immediate activation"),
         required=False)
 
     disable = zope.schema.Datetime(
-        title=u"Date of de-activation",
-        description=u"Set empty for an immediate de-activation",
+        title=_(u"Date of de-activation"),
+        description=_(u"Set empty for an immediate de-activation"),
         required=False)
 
 
 class Message(Location, Admin):
-    schema(IMessage)
     require('zope.Public')
 
     __tablename__ = 'messages'

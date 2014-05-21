@@ -8,8 +8,8 @@ next = mapping
 
 
 [filter:session]
-use = egg:wsgistate#file_session
-key = gatekeeper.session
+use = egg:cromlech.wsgistate#file_session
+session_key = gatekeeper.session
 cache = ${buildout:directory}/sessions
 
 
@@ -34,6 +34,8 @@ use = egg:gatekeeper#unauthorized
 use = egg:gatekeeper#login
 pkey = ${buildout:directory}/identity/server.key
 dest = http://gk.novareto.de
+dburl = sqlite:///${buildout:directory}/admin.db
+dbkey = gatekeeper.admin
 
 
 [app:admin]

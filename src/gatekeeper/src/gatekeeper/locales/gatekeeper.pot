@@ -1,0 +1,86 @@
+# --- PLEASE EDIT THE LINES BELOW CORRECTLY ---
+# SOME DESCRIPTIVE TITLE.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2014-05-15 09:40+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI +ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"Language-Code: en\n"
+"Language-Name: English\n"
+"Preferred-Encodings: utf-8 latin1\n"
+"Domain: gatekeeper\n"
+
+#: ./admin.py:48
+msgid "Advertisement"
+msgstr ""
+
+#: ./admin.py:46
+msgid "Alert"
+msgstr ""
+
+#: ./admin.py:39
+msgid "Always"
+msgstr ""
+
+#. Default: "Authenticate"
+#: ./login.py:161
+msgid "Authenticate"
+msgstr ""
+
+#: ./admin.py:80
+msgid "Date of activation"
+msgstr ""
+
+#: ./admin.py:85
+msgid "Date of de-activation"
+msgstr ""
+
+#: ./admin.py:41
+msgid "Disabled"
+msgstr ""
+
+#: ./admin.py:47
+msgid "Information"
+msgstr ""
+
+#: ./admin.py:64
+msgid "Message"
+msgstr ""
+
+#. Default: "Password"
+#: ./login.py:50
+msgid "Password"
+msgstr ""
+
+#: ./admin.py:81
+msgid "Set empty for an immediate activation"
+msgstr ""
+
+#: ./admin.py:86
+msgid "Set empty for an immediate de-activation"
+msgstr ""
+
+#: ./admin.py:40
+msgid "Time span"
+msgstr ""
+
+#: ./admin.py:68
+msgid "Type of message"
+msgstr ""
+
+#: ./admin.py:59
+msgid "Unique identifier"
+msgstr ""
+
+#. Default: "Username"
+#: ./login.py:45
+msgid "Username"
+msgstr ""
+

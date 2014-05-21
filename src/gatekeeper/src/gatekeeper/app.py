@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import auth_pubtkt
 import uvclight
 import ConfigParser
-
-from M2Crypto import RSA
-from urllib import unquote
 
 from cromlech.browser import exceptions, setSession
 from cromlech.configuration.utils import load_zcml
@@ -18,42 +14,20 @@ from uvclight.backends.sql import SQLAlchemySession, create_engine
 from zope.component import getUtility, getGlobalSiteManager
 from zope.location import Location
 
-from . import SESSION_KEY
-from .login import read_bauth
+from . import SESSION_KEY, ticket as tlib
 from .portals import IPortal, XMLRPCPortal
-from .admin import Admin, get_valid_messages
-
-
-class MissingTicket(exceptions.HTTPForbidden):
-    title = u'Security ticket is missing : access forbidden'
+from .admin import Admin, get_valid_messages, styles
 
 
 @uvclight.implementer(IRootObject)
 class GateKeeper(Location):
 
-    def __init__(self, pubkey, engine):
-        self.pubkey = pubkey
+    def __init__(self, engine):
         self.engine = engine
 
-    def get_tokens(self, request):
-        ticket = request.cookies.get('auth_pubtkt')
-        if ticket:
-            ticket = unquote(ticket)
-            pubkey = RSA.load_pub_key(self.pubkey)
-            fields = auth_pubtkt.parse_ticket(ticket, pubkey)
-
-            # we get the basic auth elements
-            auth = read_bauth(fields['bauth'])
-            user, password = auth.split(':', 1)
-
-            # we get the working portals
-            portals = fields['tokens']
-            return user, password, portals
-        else:
-            raise MissingTicket(location=None)
-
     def get_portals(self, request):
-        user, password, tokens = self.get_tokens(request)
+        user = request.environment['REMOTE_USER']
+        tokens = request.environment['REMOTE_ACCESS']
         for name in tokens:
             gateway = getUtility(IPortal, name=name)
             yield {
@@ -64,7 +38,9 @@ class GateKeeper(Location):
 
     def get_messages(self):
         with SQLAlchemySession(self.engine) as session:
-            messages = [m.message for m in get_valid_messages(session)]
+            messages = [
+                {'msg': m.message, 'type': m.type, 'style': styles[m.type]}
+                for m in get_valid_messages(session)]
         return messages
 
 
@@ -94,21 +70,25 @@ def keeper(global_conf, pubkey, dburl,
 
     allowed = langs.strip().replace(',', ' ').split()
     register_allowed_languages(allowed)
-    site = GateKeeper(pubkey, engine)
+    site = GateKeeper(engine)
 
     def publisher(environ, start_response):
+
+        @tlib.signed_cookie(pubkey)
+        def publish(request, root):
+            view = uvclight.query_view(request, site, name=u'index')
+            if view is not None:
+                return view
+            return uvclight.query_view(request, site, name=u'notfound'), None
+
         session = environ[SESSION_KEY].session
         setSession(session)
         request = Request(environ)
-        try:
-            view = uvclight.query_view(request, site, name=u'index')
-            if view is None:
-                view = uvclight.query_view(request, site, name=u'notfound')
-            response = view()
-        except exceptions.HTTPException, e:
+        view, error = publish(request, site)
+        if error is not None:
             view = uvclight.query_view(request, site, name=u'unauthorized')
-            view.set_message(e.title)
-            response = view()
+            view.set_message(error.title)
+        response = view()
 
         return response(environ, start_response)
     return publisher
