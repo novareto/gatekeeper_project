@@ -17,6 +17,7 @@ from cromlech.sqlalchemy import create_engine, SQLAlchemySession
 from cromlech.i18n.utils import setLanguage
 
 from dolmen.message import send
+from dolmen.forms.base.markers import HIDDEN
 
 from urllib import quote
 from uvclight import IRootObject, setSession, query_view
@@ -49,6 +50,12 @@ class ILoginForm(Interface):
         title=_(u"Password", default=u"Password"),
         required=True,
     )
+
+    back = TextLine(
+        title=u"back",
+        required=False,
+    )
+
 
 
 class DirectResponse(Exception):
@@ -93,8 +100,8 @@ class LogMe(Action):
             privkey, login, validuntil, tokens=list(authenticated_for),
             extra_fields=(('bauth', val),))
 
-        back = form.request.form.get('back', back)
-        res = HTTPFound(back)
+        back = form.request.form.get('form.field.back', back)
+        res = HTTPFound(location=back)
         res.set_cookie('auth_pubtkt', quote(ticket), path='/',
                        domain='novareto.de', secure=False)
         return res
@@ -126,8 +133,12 @@ class BaseLoginForm(Form):
     baseclass()
     context(LoginRoot)
 
+    prefix = ""
     fields = Fields(ILoginForm)
+    fields['back'].mode = HIDDEN
+    fields['back'].prefix = ""
     actions = Actions(LogMe(_(u'Authenticate'), default=u"Authenticate"))
+    ignoreRequest = False
 
     def available(self):
         marker = True
