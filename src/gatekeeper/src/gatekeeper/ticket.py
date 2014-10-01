@@ -10,10 +10,11 @@ from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA
 from Crypto.Signature import PKCS1_v1_5
 from cromlech.browser import exceptions
+from . import i18n as _ 
 
 
 class MissingTicket(exceptions.HTTPForbidden):
-    title = u'Security ticket is missing : access forbidden'
+    title = _(u'Security ticket is missing : access forbidden')
 
 
 class TicketParseError(Exception):
@@ -24,18 +25,18 @@ class TicketParseError(Exception):
         self.msg = msg
         
     def __str__(self):
-        return 'Ticket parse error: %s (%s)' % (self.msg, self.ticket)
+        return _('Ticket parse error: %s (%s)') % (self.msg, self.ticket)
 
 
 class BadTicket(TicketParseError):
 
-    def __init__(self, ticket, msg= 'Invalid ticket format'):
+    def __init__(self, ticket, msg=_('Invalid ticket format')):
         super(BadTicket, self).__init__(ticket, msg)
 
 
 class BadSignature(TicketParseError):
 
-    def __init__(self, ticket, msg='Invalid ticket format'):
+    def __init__(self, ticket, msg=_('Invalid ticket format')):
         super(BadSignature, self).__init__(ticket, msg)
 
 
@@ -79,7 +80,7 @@ class AESCipher(object):
         return encrypted
 
     def decrypt(self, data):
-        iv = data[:16]
+        iv = data[:AES.block_size]
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
         decoded = cipher.decrypt(data[AES.block_size:])
         return self.pkcs1_unpad(decoded)
@@ -100,7 +101,6 @@ def verify_sig(pubkey, data, sig):
 
 
 def parse_ticket(ticket, pubkey):
-
     i = ticket.rfind(';')
     sig = ticket[i+1:]
     if sig[:4] != 'sig=':
@@ -201,7 +201,7 @@ def bauth(val):
 
 
 def read_bauth(val):
-    return aes.decrypt(base64.decodestring(val))
+    return aes.decrypt(base64.b64decode(val))
 
 
 class signed_cookie(object):

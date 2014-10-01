@@ -2,14 +2,17 @@
 
 import datetime
 import transaction
+from barrel import cooper
 
 from . import SESSION_KEY, i18n as _
 
-from uvclight import setSession, IRootObject, Interaction
-from uvclight import query_view, require, traversable
 from cromlech.dawnlight import DawnlightPublisher, ViewLookup
+from cromlech.i18n.utils import setLanguage
 from cromlech.webob import Request
 from dolmen.sqlcontainer import SQLContainer
+
+from uvclight import query_view, require, traversable
+from uvclight import setSession, IRootObject, Interaction
 
 from sqlalchemy import Column, Text, Integer, DateTime, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -132,6 +135,12 @@ def get_valid_messages(session):
     return iter(enabled.union(valid))
 
 
+admins = [
+    ('admin', 'admin'),
+    ]
+
+REALM = "sso.novareto.de"
+    
 def admin(global_conf, dburl, dbkey, pkey, **kwargs):
 
     engine = create_and_register_engine(dburl, dbkey)
@@ -141,9 +150,11 @@ def admin(global_conf, dburl, dbkey, pkey, **kwargs):
     root = AdminRoot(pkey, dbkey)
     publisher = DawnlightPublisher(view_lookup=view_lookup)
 
+    @cooper.basicauth(users=admins, realm=REALM)
     def app(environ, start_response):
         session = environ[SESSION_KEY].session
         setSession(session)
+        setLanguage('de')
         request = Request(environ)
         with Interaction():
             with transaction.manager as tm:

@@ -93,7 +93,8 @@ class LogMe(Action):
 
     def cook(self, form, login, password, authenticated_for, back):
         privkey = tlib.read_key(form.context.pkey)
-        val = base64.encodestring(tlib.bauth('%s:%s' % (login, password)))
+        val = base64.b64encode(tlib.bauth('%s:%s' % (login, password)))
+        #val = val.replace('\n', '', 1)
         validtime = datetime.datetime.now() + datetime.timedelta(hours=1)
         validuntil = int(time.mktime(validtime.timetuple()))
         ticket = tlib.create_ticket(
@@ -118,12 +119,12 @@ class LogMe(Action):
 
         authenticated_for = form.authenticate(login, password)
         if authenticated_for:
-            send(u'Login successful.')
+            send(_(u'Login successful.'))
             res = self.cook(
                 form, login, password, authenticated_for, form.context.dest)
             raise DirectResponse(res)
         else:
-            sent = send(u'Login failed.')
+            sent = send(_(u'Login failed.'))
             assert sent is True
             url = form.request.url
             return SuccessMarker('LoginFailed', False, url=url)
@@ -137,7 +138,7 @@ class BaseLoginForm(Form):
     fields = Fields(ILoginForm)
     fields['back'].mode = HIDDEN
     fields['back'].prefix = ""
-    actions = Actions(LogMe(_(u'Authenticate'), default=u"Authenticate"))
+    actions = Actions(LogMe(_(u'Authenticate'), default=_(u"Authenticate")))
     ignoreRequest = False
 
     def available(self):

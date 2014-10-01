@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2014-05-15 09:40+0000\n"
+"POT-Creation-Date: 2014-05-27 09:20+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI +ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,41 +17,61 @@ msgstr ""
 "Preferred-Encodings: utf-8 latin1\n"
 "Domain: gatekeeper\n"
 
-#: ./admin.py:48
-msgid "Advertisement"
+#. Default: "Advertisment"
+#: ./admin.py:51
+msgid "Ad"
 msgstr ""
 
-#: ./admin.py:46
+#. Default: "Alert"
+#: ./admin.py:49
 msgid "Alert"
 msgstr ""
 
-#: ./admin.py:39
+#. Default: "Always"
+#: ./admin.py:42
 msgid "Always"
 msgstr ""
 
-#. Default: "Authenticate"
-#: ./login.py:161
+#: ./login.py:141
 msgid "Authenticate"
 msgstr ""
 
-#: ./admin.py:80
+#: ./admin.py:90
 msgid "Date of activation"
 msgstr ""
 
-#: ./admin.py:85
+#: ./admin.py:95
 msgid "Date of de-activation"
 msgstr ""
 
-#: ./admin.py:41
+#. Default: "Disabled"
+#: ./admin.py:44
 msgid "Disabled"
 msgstr ""
 
-#: ./admin.py:47
-msgid "Information"
+#. Default: "Information"
+#: ./admin.py:50
+msgid "Info"
 msgstr ""
 
-#: ./admin.py:64
+#: ./ticket.py:33
+msgid "Invalid ticket format"
+msgstr ""
+
+#: ./login.py:127
+msgid "Login failed."
+msgstr ""
+
+#: ./login.py:122
+msgid "Login successful."
+msgstr ""
+
+#: ./admin.py:74
 msgid "Message"
+msgstr ""
+
+#: ./admin.py:84
+msgid "Method of activation"
 msgstr ""
 
 #. Default: "Password"
@@ -59,23 +79,32 @@ msgstr ""
 msgid "Password"
 msgstr ""
 
-#: ./admin.py:81
+#: ./ticket.py:17
+msgid "Security ticket is missing : access forbidden"
+msgstr ""
+
+#: ./admin.py:91
 msgid "Set empty for an immediate activation"
 msgstr ""
 
-#: ./admin.py:86
+#: ./admin.py:96
 msgid "Set empty for an immediate de-activation"
 msgstr ""
 
-#: ./admin.py:40
+#: ./ticket.py:28
+msgid "Ticket parse error: %s (%s)"
+msgstr ""
+
+#. Default: "Time span"
+#: ./admin.py:43
 msgid "Time span"
 msgstr ""
 
-#: ./admin.py:68
+#: ./admin.py:78
 msgid "Type of message"
 msgstr ""
 
-#: ./admin.py:59
+#: ./admin.py:69
 msgid "Unique identifier"
 msgstr ""
 
